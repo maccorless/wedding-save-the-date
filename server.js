@@ -674,7 +674,8 @@ app.post('/api/admin/reset-stats', adminAuth, (req, res) => {
   });
 });
 
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`Wedding Save-the-Date server running on ${BASE_URL}`);
   console.log(`Admin dashboard available at ${BASE_URL}/admin`);
+  console.log(`Server listening on port ${PORT}`);
 });

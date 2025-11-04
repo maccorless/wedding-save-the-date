@@ -109,6 +109,46 @@ h2 {
   font-style: italic;
 }
 
+.hotel-info {
+  background: #FFF5EB;
+  border-left: 4px solid #8B2635;
+  padding: 20px;
+  margin: 30px auto;
+  max-width: 450px;
+  border-radius: 8px;
+}
+
+.hotel-text {
+  font-size: 0.9rem;
+  color: #666;
+  margin-bottom: 8px;
+}
+
+.hotel-name {
+  font-size: 1.1rem;
+  color: #8B2635;
+  font-weight: bold;
+  margin-bottom: 15px;
+}
+
+.hotel-link {
+  display: inline-block;
+  background: #8B2635;
+  color: white;
+  text-decoration: none;
+  padding: 12px 30px;
+  border-radius: 50px;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(139, 38, 53, 0.3);
+}
+
+.hotel-link:hover {
+  background: #722F37;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(139, 38, 53, 0.5);
+}
+
 .button-group {
   display: flex;
   gap: 15px;
