@@ -258,14 +258,46 @@ async function loadStats() {
     // Calculate summary statistics
     const totalInvitees = data.length;
     const totalViews = data.reduce((sum, inv) => sum + inv.view_count, 0);
-    const totalClicks = data.reduce((sum, inv) => sum + inv.click_count, 0);
+
+    // Calculate confirmed count: group by invite_master and count people who said "planning"
+    const inviteMasterGroups = {};
+    data.forEach(inv => {
+      const master = inv.invite_master || inv.name;
+      if (!inviteMasterGroups[master]) {
+        inviteMasterGroups[master] = {
+          invitees: [],
+          mostRecentResponse: null,
+          mostRecentDate: null
+        };
+      }
+      inviteMasterGroups[master].invitees.push(inv);
+
+      // Track the most recent response across all invitees in this group
+      if (inv.response_type && inv.last_clicked) {
+        const clickedDate = new Date(inv.last_clicked);
+        if (!inviteMasterGroups[master].mostRecentDate || clickedDate > inviteMasterGroups[master].mostRecentDate) {
+          inviteMasterGroups[master].mostRecentResponse = inv.response_type;
+          inviteMasterGroups[master].mostRecentDate = clickedDate;
+        }
+      }
+    });
+
+    // Count confirmed people (those whose invite_master has most recent response = "planning")
+    let totalConfirmed = 0;
+    Object.values(inviteMasterGroups).forEach(group => {
+      if (group.mostRecentResponse === 'planning') {
+        // Count the number of people in this group (1 or 2)
+        totalConfirmed += group.invitees.length;
+      }
+    });
+
     const inviteesWithViews = data.filter(inv => inv.view_count > 0).length;
     const viewRate = totalInvitees > 0 ? Math.round((inviteesWithViews / totalInvitees) * 100) : 0;
 
     // Update summary cards
     document.getElementById('totalInvitees').textContent = totalInvitees;
     document.getElementById('totalViews').textContent = totalViews;
-    document.getElementById('totalClicks').textContent = totalClicks;
+    document.getElementById('totalClicks').textContent = totalConfirmed;
     document.getElementById('viewRate').textContent = `${viewRate}%`;
 
     // Populate table
