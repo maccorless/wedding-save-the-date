@@ -41,32 +41,20 @@ function generateEmailHTML(greeting, saveTheDateUrl) {
       letter-spacing: 1px;
     }
     .content {
-      padding: 40px 30px;
+      padding: 30px 30px;
       text-align: center;
     }
     .divider {
       width: 100px;
       height: 2px;
       background: linear-gradient(90deg, transparent, #D4A5A5, transparent);
-      margin: 30px auto;
-    }
-    .names {
-      font-size: 28px;
-      color: #333;
-      margin: 20px 0;
-      font-weight: normal;
-    }
-    .subtitle {
-      font-size: 18px;
-      color: #666;
-      font-style: italic;
-      margin-bottom: 30px;
+      margin: 20px auto;
     }
     .date-box {
       background: #FFF5EB;
       border-left: 4px solid #8B2635;
       padding: 25px;
-      margin: 30px 0;
+      margin: 20px 0;
     }
     .date {
       font-size: 24px;
@@ -126,9 +114,6 @@ function generateEmailHTML(greeting, saveTheDateUrl) {
 
     <div class="content">
       <div class="divider"></div>
-
-      <p class="names">Alfiya and Ken Corless</p>
-      <p class="subtitle">Save the Date</p>
 
       <div class="date-box">
         <div class="date">April 4, 2026</div>
