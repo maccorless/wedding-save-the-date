@@ -1,25 +1,11 @@
-const nodemailer = require('nodemailer');
+const { Resend } = require('resend');
 require('dotenv').config();
 
-// Create reusable transporter using Resend SMTP
-const transporter = nodemailer.createTransport({
-  host: 'smtp.resend.com',
-  port: 465,
-  secure: true,
-  auth: {
-    user: 'resend',
-    pass: process.env.RESEND_API_KEY
-  }
-});
+// Initialize Resend with API key
+const resend = new Resend(process.env.RESEND_API_KEY);
 
-// Verify transporter configuration
-transporter.verify((error, success) => {
-  if (error) {
-    console.error('Email transporter error:', error);
-  } else {
-    console.log('Email server is ready to send messages');
-  }
-});
+// Log that email service is ready
+console.log('Email server is ready to send messages (Resend API)');
 
 // Generate HTML email template
 function generateEmailHTML(greeting, saveTheDateUrl) {
@@ -201,18 +187,24 @@ async function sendEmail(toAddresses, inviteMaster, saveTheDateUrl, invitees = [
   // Generate HTML content
   const htmlContent = generateEmailHTML(greeting, saveTheDateUrl);
 
-  // Prepare email options
-  const mailOptions = {
-    from: `"Alfiya & Ken" <${process.env.EMAIL_FROM || 'noreply@alfiyaandken.com'}>`,
-    to: Array.isArray(toAddresses) ? toAddresses.join(', ') : toAddresses,
-    subject: 'Save the Date - Alfiya & Ken - April 4, 2026',
-    html: htmlContent
-  };
+  // Convert toAddresses to array if it's a string
+  const toArray = Array.isArray(toAddresses) ? toAddresses : [toAddresses];
 
   try {
-    const info = await transporter.sendMail(mailOptions);
-    console.log('Email sent successfully:', info.messageId);
-    return { success: true, messageId: info.messageId };
+    const { data, error } = await resend.emails.send({
+      from: `Alfiya & Ken <${process.env.EMAIL_FROM || 'noreply@alfiyaandken.com'}>`,
+      to: toArray,
+      subject: 'Save the Date - Alfiya & Ken - April 4, 2026',
+      html: htmlContent
+    });
+
+    if (error) {
+      console.error('Error sending email:', error);
+      return { success: false, error: error.message };
+    }
+
+    console.log('Email sent successfully:', data.id);
+    return { success: true, messageId: data.id };
   } catch (error) {
     console.error('Error sending email:', error);
     return { success: false, error: error.message };
