@@ -1,3 +1,7 @@
+// Create audio element for button clicks
+const clickAudio = new Audio('/IHTBY.mp3');
+clickAudio.volume = 0.5; // Set to 50% volume
+
 // Get URL parameters
 function getQueryParam(param) {
   const urlParams = new URLSearchParams(window.location.search);
@@ -124,6 +128,10 @@ function clearResponseIndicators() {
 
 // Handle response button click
 async function handleResponse(responseType, button) {
+  // Play audio immediately on button click
+  clickAudio.currentTime = 0; // Reset to start in case it's already playing
+  clickAudio.play().catch(err => console.log('Audio play failed:', err));
+
   const confirmMessage = document.getElementById('confirmMessage');
   const allButtons = document.querySelectorAll('.response-button');
 
