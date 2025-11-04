@@ -116,6 +116,13 @@ h2 {
   margin: 30px auto;
   max-width: 450px;
   border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+.hotel-info.disabled {
+  opacity: 0.4;
+  pointer-events: none;
+  filter: grayscale(100%);
 }
 
 .hotel-text {
@@ -147,6 +154,12 @@ h2 {
   background: #722F37;
   transform: translateY(-2px);
   box-shadow: 0 6px 20px rgba(139, 38, 53, 0.5);
+}
+
+.hotel-info.disabled .hotel-link:hover {
+  background: #8B2635;
+  transform: none;
+  box-shadow: 0 4px 15px rgba(139, 38, 53, 0.3);
 }
 
 .button-group {

@@ -99,6 +99,7 @@ function showPreviousResponse(responseType, responseDate) {
   const unlikelyButton = document.getElementById('unlikelyButton');
   const planningReply = document.getElementById('planningReply');
   const unlikelyReply = document.getElementById('unlikelyReply');
+  const hotelInfo = document.getElementById('hotelInfo');
 
   const formattedDate = responseDate ? ` on ${formatDate(responseDate)}` : '';
 
@@ -106,10 +107,14 @@ function showPreviousResponse(responseType, responseDate) {
     planningButton.classList.add('selected');
     planningReply.textContent = `You replied${formattedDate}`;
     planningReply.classList.remove('hidden');
+    // Enable hotel info for planning response
+    hotelInfo.classList.remove('disabled');
   } else if (responseType === 'unlikely') {
     unlikelyButton.classList.add('selected');
     unlikelyReply.textContent = `You replied${formattedDate}`;
     unlikelyReply.classList.remove('hidden');
+    // Keep hotel info disabled for unlikely response
+    hotelInfo.classList.add('disabled');
   }
 }
 
@@ -162,6 +167,14 @@ async function handleResponse(responseType, button) {
   }
   confirmMessage.classList.remove('hidden');
   button.textContent = originalText;
+
+  // Enable/disable hotel info based on response
+  const hotelInfo = document.getElementById('hotelInfo');
+  if (responseType === 'planning') {
+    hotelInfo.classList.remove('disabled');
+  } else {
+    hotelInfo.classList.add('disabled');
+  }
 
   // Re-enable buttons to allow changing
   setTimeout(() => {
