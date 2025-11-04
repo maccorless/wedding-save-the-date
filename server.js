@@ -80,10 +80,8 @@ app.get('/api/invitee/:code', (req, res) => {
         return res.status(500).json({ error: 'Database error' });
       }
 
-      // Use the first invitee for display name (they all share the same unique code)
-      const displayName = invitees.length === 1
-        ? invitees[0].name
-        : invitees[0].invite_master || invitees.map(i => i.first_name).join(' & ');
+      // Use invite_master for display name (represents the group)
+      const displayName = invitees[0].invite_master || invitees[0].name;
 
       res.json({
         id: invitees[0].id,  // Use first invitee ID for tracking

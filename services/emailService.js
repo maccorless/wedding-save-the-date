@@ -161,28 +161,8 @@ function generateEmailHTML(greeting, saveTheDateUrl) {
 
 // Send email function
 async function sendEmail(toAddresses, inviteMaster, saveTheDateUrl, invitees = []) {
-  // Generate greeting from invitee names
-  let greeting;
-
-  if (invitees.length === 0) {
-    // Fallback to invite master if no invitees provided
-    greeting = `Dear ${inviteMaster}`;
-  } else if (invitees.length === 1) {
-    // Single person: "Dear FirstName LastName"
-    const person = invitees[0];
-    greeting = `Dear ${person.first_name} ${person.last_name}`;
-  } else if (invitees.length === 2) {
-    // Two people: "Dear FirstName1 and FirstName2"
-    greeting = `Dear ${invitees[0].first_name} and ${invitees[1].first_name}`;
-  } else {
-    // More than two: use invite master or construct from names
-    const firstNames = invitees.map(inv => inv.first_name).filter(name => name);
-    if (firstNames.length > 0) {
-      greeting = `Dear ${firstNames.join(', ')}`;
-    } else {
-      greeting = `Dear ${inviteMaster}`;
-    }
-  }
+  // Generate greeting using invite master name
+  const greeting = `Dear ${inviteMaster}`;
 
   // Generate HTML content
   const htmlContent = generateEmailHTML(greeting, saveTheDateUrl);
