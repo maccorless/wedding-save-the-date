@@ -198,14 +198,8 @@ app.get('/api/admin/email-preview/:inviteMaster', adminAuth, (req, res) => {
         return res.status(500).json({ error: 'Database error' });
       }
 
-      // Generate greeting based on guests
-      let greeting = 'Dear ';
-      if (guests.length === 1) {
-        greeting += guests[0].name;
-      } else {
-        // Multiple guests - use invite master as the addressee
-        greeting += inviteMaster;
-      }
+      // Generate greeting using invite_master (matches actual email sending)
+      const greeting = `Dear ${inviteMaster}`;
 
       // Generate email URL
       const saveTheDateUrl = `${BASE_URL}/?code=${tracking.unique_code}`;
