@@ -4,6 +4,7 @@ const path = require('path');
 const db = require('./database/db');
 const { v4: uuidv4 } = require('uuid');
 const { sendEmail, sendTestEmail } = require('./services/emailService');
+const basicAuth = require('basic-auth');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -24,13 +25,26 @@ app.use((req, res, next) => {
 app.use(express.json());
 app.use(express.static('public'));
 
+// Basic Auth middleware for admin routes
+const adminAuth = (req, res, next) => {
+  const credentials = basicAuth(req);
+  const validUsername = process.env.ADMIN_USERNAME || 'admin';
+  const validPassword = process.env.ADMIN_PASSWORD || 'password';
+
+  if (!credentials || credentials.name !== validUsername || credentials.pass !== validPassword) {
+    res.set('WWW-Authenticate', 'Basic realm="Admin Access"');
+    return res.status(401).send('Authentication required');
+  }
+  next();
+};
+
 // Serve save-the-date page
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// Serve admin dashboard
-app.get('/admin', (req, res) => {
+// Serve admin dashboard (protected with Basic Auth)
+app.get('/admin', adminAuth, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'admin.html'));
 });
 
@@ -115,7 +129,7 @@ app.post('/api/track/click', (req, res) => {
 });
 
 // API: Get admin statistics
-app.get('/api/admin/stats', (req, res) => {
+app.get('/api/admin/stats', adminAuth, (req, res) => {
   const query = `
     SELECT
       i.id,
@@ -147,7 +161,7 @@ app.get('/api/admin/stats', (req, res) => {
 });
 
 // API: Get email preview for an invite master
-app.get('/api/admin/email-preview/:inviteMaster', (req, res) => {
+app.get('/api/admin/email-preview/:inviteMaster', adminAuth, (req, res) => {
   const { inviteMaster } = req.params;
 
   // Get all guests for this invite master
@@ -213,7 +227,7 @@ app.get('/api/admin/email-preview/:inviteMaster', (req, res) => {
 });
 
 // API: Create new invitee
-app.post('/api/admin/invitees', (req, res) => {
+app.post('/api/admin/invitees', adminAuth, (req, res) => {
   const {
     first_name,
     last_name,
@@ -287,7 +301,7 @@ app.post('/api/admin/invitees', (req, res) => {
 });
 
 // API: Update invitee
-app.put('/api/admin/invitees/:id', (req, res) => {
+app.put('/api/admin/invitees/:id', adminAuth, (req, res) => {
   const { id } = req.params;
   const {
     first_name,
@@ -331,7 +345,7 @@ app.put('/api/admin/invitees/:id', (req, res) => {
 });
 
 // API: Delete invitee
-app.delete('/api/admin/invitees/:id', (req, res) => {
+app.delete('/api/admin/invitees/:id', adminAuth, (req, res) => {
   const { id } = req.params;
 
   // Delete associated records first
@@ -359,7 +373,7 @@ app.delete('/api/admin/invitees/:id', (req, res) => {
 });
 
 // API: Bulk import invitees
-app.post('/api/admin/invitees/bulk', (req, res) => {
+app.post('/api/admin/invitees/bulk', adminAuth, (req, res) => {
   const { guests, mode } = req.body;
 
   if (!guests || !Array.isArray(guests)) {
@@ -486,7 +500,7 @@ app.post('/api/admin/invitees/bulk', (req, res) => {
 });
 
 // API: Send test email to yourself
-app.post('/api/admin/email/test', async (req, res) => {
+app.post('/api/admin/email/test', adminAuth, async (req, res) => {
   const { inviteMaster } = req.body;
 
   try {
@@ -506,7 +520,7 @@ app.post('/api/admin/email/test', async (req, res) => {
 });
 
 // API: Send emails to selected invite masters
-app.post('/api/admin/email/send', async (req, res) => {
+app.post('/api/admin/email/send', adminAuth, async (req, res) => {
   const { inviteMasters } = req.body;
 
   if (!inviteMasters || !Array.isArray(inviteMasters) || inviteMasters.length === 0) {
@@ -613,7 +627,7 @@ app.post('/api/admin/email/send', async (req, res) => {
 });
 
 // Reset stats endpoint
-app.post('/api/admin/reset-stats', (req, res) => {
+app.post('/api/admin/reset-stats', adminAuth, (req, res) => {
   // First check if any emails have been sent
   db.get('SELECT COUNT(*) as count FROM email_tracking WHERE status = "sent"', (err, row) => {
     if (err) {
