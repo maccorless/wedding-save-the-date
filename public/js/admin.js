@@ -35,7 +35,56 @@ function createNewRow() {
   return row;
 }
 
-// Create a display row
+// Create a display row for an invite_master group (may contain 1 or 2 people)
+function createGroupDisplayRow(group, groupIndex) {
+  const invitees = group.invitees;
+  const firstInvitee = invitees[0];
+  const masterName = firstInvitee.invite_master || firstInvitee.name;
+
+  const row = document.createElement('tr');
+  row.dataset.id = firstInvitee.id;  // Use first invitee's ID for actions
+  row.dataset.inviteMaster = masterName;
+  row.dataset.inviteMasterGroup = groupIndex % 2 === 0 ? 'even' : 'odd';
+
+  const uniqueLink = `${window.location.origin}/?code=${firstInvitee.unique_code}`;
+  const isEmailSent = firstInvitee.email_status === 'sent';
+
+  // Build names and emails display
+  let namesDisplay = invitees.map(inv => `${inv.first_name || ''} ${inv.last_name || ''}`).join(' & ');
+  let emailsDisplay = invitees.map(inv => inv.email).filter(e => e).join(', ') || '-';
+
+  row.innerHTML = `
+    <td class="checkbox-col">
+      <input type="checkbox" class="row-checkbox" data-invite-master="${masterName}" ${isEmailSent ? 'disabled' : ''} onchange="updateSendButton()">
+    </td>
+    <td data-field="invite_master">${masterName}</td>
+    <td colspan="2" data-field="names">${namesDisplay}</td>
+    <td data-field="email">${emailsDisplay}</td>
+    <td class="link-cell">
+      <button class="copy-btn" onclick="copyToClipboard('${uniqueLink}')">Copy Link</button>
+    </td>
+    <td class="${firstInvitee.view_count > 0 ? 'status-viewed' : 'status-not-viewed'}">
+      ${firstInvitee.view_count}
+    </td>
+    <td class="${group.mostRecentResponse === 'planning' ? 'status-planning' : group.mostRecentResponse === 'unlikely' ? 'status-unlikely' : ''}">
+      ${group.mostRecentResponse === 'planning' ? 'Planning' : group.mostRecentResponse === 'unlikely' ? 'Unlikely' : '-'}
+    </td>
+    <td>
+      <span class="status-badge ${firstInvitee.email_status || 'drafted'}">${firstInvitee.email_status || 'drafted'}</span>
+      ${masterName ? `<button class="preview-email-btn" onclick="showEmailPreview(\`${masterName.replace(/`/g, '\\`')}\`)">Preview</button>` : ''}
+    </td>
+    <td>
+      <div class="action-btns">
+        <button class="icon-btn edit-btn" onclick="editGroup(${firstInvitee.id})" title="Edit">✏️</button>
+        <button class="icon-btn delete-btn" onclick="deleteGroup('${masterName}')" title="Delete">❌</button>
+      </div>
+    </td>
+  `;
+
+  return row;
+}
+
+// Legacy function - keeping for compatibility (no longer used for main table)
 function createDisplayRow(invitee, isFirstInGroup = false, groupIndex = 0) {
   const row = document.createElement('tr');
   row.dataset.id = invitee.id;
@@ -244,6 +293,56 @@ async function deleteGuest(id, name) {
   }
 }
 
+// Edit group (redirects to editing first person in group)
+function editGroup(firstInviteeId) {
+  const row = document.querySelector(`tr[data-id="${firstInviteeId}"]`);
+  if (row) {
+    const editBtn = row.querySelector('.edit-btn');
+    if (editBtn) {
+      editRow(editBtn);
+    }
+  }
+}
+
+// Delete entire invite_master group
+async function deleteGroup(inviteMaster) {
+  // Find all invitees in this group
+  const inviteesInGroup = guestData.filter(inv =>
+    (inv.invite_master || inv.name) === inviteMaster
+  );
+
+  if (inviteesInGroup.length === 0) {
+    alert('No guests found in this group');
+    return;
+  }
+
+  const namesList = inviteesInGroup.map(inv =>
+    `${inv.first_name || ''} ${inv.last_name || ''}`
+  ).join(', ');
+
+  if (!confirm(`Are you sure you want to delete the entire group "${inviteMaster}"?\n\nThis includes: ${namesList}\n\nThis will also delete all their tracking data.`)) {
+    return;
+  }
+
+  try {
+    // Delete each invitee in the group
+    for (const invitee of inviteesInGroup) {
+      const response = await fetch(`/api/admin/invitees/${invitee.id}`, {
+        method: 'DELETE'
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to delete ${invitee.first_name} ${invitee.last_name}`);
+      }
+    }
+
+    await loadStats();
+  } catch (error) {
+    console.error('Error deleting group:', error);
+    alert('Error deleting group. Please try again.');
+  }
+}
+
 // Load and display statistics
 async function loadStats() {
   try {
@@ -257,7 +356,15 @@ async function loadStats() {
 
     // Calculate summary statistics
     const totalInvitees = data.length;
-    const totalViews = data.reduce((sum, inv) => sum + inv.view_count, 0);
+
+    // Calculate total views: sum view_count per unique_code (not per person)
+    const uniqueCodeViews = {};
+    data.forEach(inv => {
+      if (!uniqueCodeViews[inv.unique_code]) {
+        uniqueCodeViews[inv.unique_code] = inv.view_count;
+      }
+    });
+    const totalViews = Object.values(uniqueCodeViews).reduce((sum, count) => sum + count, 0);
 
     // Calculate confirmed count: group by invite_master and count people who said "planning"
     const inviteMasterGroups = {};
@@ -291,8 +398,12 @@ async function loadStats() {
       }
     });
 
-    const inviteesWithViews = data.filter(inv => inv.view_count > 0).length;
-    const viewRate = totalInvitees > 0 ? Math.round((inviteesWithViews / totalInvitees) * 100) : 0;
+    // Count invite_master groups with views (not individual people)
+    const groupsWithViews = Object.values(inviteMasterGroups).filter(group =>
+      group.invitees.some(inv => inv.view_count > 0)
+    ).length;
+    const totalGroups = Object.keys(inviteMasterGroups).length;
+    const viewRate = totalGroups > 0 ? Math.round((groupsWithViews / totalGroups) * 100) : 0;
 
     // Update summary cards
     document.getElementById('totalInvitees').textContent = totalInvitees;
@@ -300,7 +411,7 @@ async function loadStats() {
     document.getElementById('totalClicks').textContent = totalConfirmed;
     document.getElementById('viewRate').textContent = `${viewRate}%`;
 
-    // Populate table
+    // Populate table - group by invite_master to show one row per group
     const tableBody = document.getElementById('tableBody');
     tableBody.innerHTML = '';
 
@@ -309,21 +420,11 @@ async function loadStats() {
       return;
     }
 
-    // Track invite master groups for visual grouping
-    let lastInviteMaster = null;
-    let groupIndex = 0;
-
-    data.forEach(invitee => {
-      const isFirstInGroup = invitee.invite_master !== lastInviteMaster;
-
-      if (isFirstInGroup && lastInviteMaster !== null) {
-        groupIndex++;
-      }
-
-      const row = createDisplayRow(invitee, isFirstInGroup, groupIndex);
+    // Display one row per invite_master group
+    Object.keys(inviteMasterGroups).forEach((masterName, groupIndex) => {
+      const group = inviteMasterGroups[masterName];
+      const row = createGroupDisplayRow(group, groupIndex);
       tableBody.appendChild(row);
-
-      lastInviteMaster = invitee.invite_master;
     });
 
   } catch (error) {

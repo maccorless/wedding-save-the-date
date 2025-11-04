@@ -128,6 +128,8 @@ app.post('/api/track/click', (req, res) => {
 
 // API: Get admin statistics
 app.get('/api/admin/stats', adminAuth, (req, res) => {
+  // Get all invitees grouped by unique_code
+  // For tracking, we look up views/clicks for ANY invitee with same unique_code
   const query = `
     SELECT
       i.id,
@@ -140,11 +142,21 @@ app.get('/api/admin/stats', adminAuth, (req, res) => {
       i.unique_code,
       i.invite_master,
       i.created_at,
-      (SELECT COUNT(*) FROM page_views WHERE invitee_id = i.id) as view_count,
-      (SELECT viewed_at FROM page_views WHERE invitee_id = i.id ORDER BY viewed_at DESC LIMIT 1) as last_viewed,
-      (SELECT COUNT(*) FROM button_clicks WHERE invitee_id = i.id) as click_count,
-      (SELECT clicked_at FROM button_clicks WHERE invitee_id = i.id ORDER BY clicked_at DESC LIMIT 1) as last_clicked,
-      (SELECT response_type FROM button_clicks WHERE invitee_id = i.id ORDER BY clicked_at DESC LIMIT 1) as response_type,
+      (SELECT COUNT(*) FROM page_views pv
+       JOIN invitees i2 ON pv.invitee_id = i2.id
+       WHERE i2.unique_code = i.unique_code) as view_count,
+      (SELECT viewed_at FROM page_views pv
+       JOIN invitees i2 ON pv.invitee_id = i2.id
+       WHERE i2.unique_code = i.unique_code
+       ORDER BY viewed_at DESC LIMIT 1) as last_viewed,
+      (SELECT response_type FROM button_clicks bc
+       JOIN invitees i2 ON bc.invitee_id = i2.id
+       WHERE i2.unique_code = i.unique_code
+       ORDER BY clicked_at DESC LIMIT 1) as response_type,
+      (SELECT clicked_at FROM button_clicks bc
+       JOIN invitees i2 ON bc.invitee_id = i2.id
+       WHERE i2.unique_code = i.unique_code
+       ORDER BY clicked_at DESC LIMIT 1) as last_clicked,
       (SELECT status FROM email_tracking WHERE invite_master = i.invite_master) as email_status
     FROM invitees i
     ORDER BY i.invite_master, i.last_name, i.first_name
