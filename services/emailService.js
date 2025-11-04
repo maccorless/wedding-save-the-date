@@ -1,12 +1,14 @@
 const nodemailer = require('nodemailer');
 require('dotenv').config();
 
-// Create reusable transporter
+// Create reusable transporter using Resend SMTP
 const transporter = nodemailer.createTransport({
-  service: 'gmail',
+  host: 'smtp.resend.com',
+  port: 465,
+  secure: true,
   auth: {
-    user: process.env.GMAIL_USER,
-    pass: process.env.GMAIL_APP_PASSWORD
+    user: 'resend',
+    pass: process.env.RESEND_API_KEY
   }
 });
 
@@ -201,7 +203,7 @@ async function sendEmail(toAddresses, inviteMaster, saveTheDateUrl, invitees = [
 
   // Prepare email options
   const mailOptions = {
-    from: `"Alfiya & Ken" <${process.env.GMAIL_USER}>`,
+    from: `"Alfiya & Ken" <${process.env.EMAIL_FROM || 'noreply@alfiyaandken.com'}>`,
     to: Array.isArray(toAddresses) ? toAddresses.join(', ') : toAddresses,
     subject: 'Save the Date - Alfiya & Ken - April 4, 2026',
     html: htmlContent
@@ -219,7 +221,8 @@ async function sendEmail(toAddresses, inviteMaster, saveTheDateUrl, invitees = [
 
 // Test email function (sends to self)
 async function sendTestEmail(saveTheDateUrl) {
-  return sendEmail(process.env.GMAIL_USER, 'Ken (Test)', saveTheDateUrl);
+  const testEmail = process.env.TEST_EMAIL_TO || 'ken@corless.com';
+  return sendEmail(testEmail, 'Ken (Test)', saveTheDateUrl);
 }
 
 module.exports = {
