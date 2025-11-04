@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard - Save the Date</title>
+  <link rel="stylesheet" href="/css/admin.css">
+</head>
+<body>
+  <div class="dashboard">
+    <header>
+      <h1>Save the Date - Admin Dashboard</h1>
+      <div class="header-actions">
+        <button id="sendTestEmailBtn" class="test-email-btn">📧 Send Test Email</button>
+        <button id="sendSelectedBtn" class="send-btn" disabled>✉️ Send Selected</button>
+        <button id="addGuestBtn" class="add-btn">+ Add Guest</button>
+        <button id="bulkImportBtn" class="bulk-import-btn">Bulk Import</button>
+        <button id="resetStatsBtn" class="reset-btn">🔄 Reset Stats</button>
+        <button id="refreshBtn" class="refresh-btn">Refresh Data</button>
+      </div>
+    </header>
+
+    <div class="summary">
+      <div class="stat-card">
+        <h3>Total Invitees</h3>
+        <p id="totalInvitees" class="stat-number">0</p>
+      </div>
+      <div class="stat-card">
+        <h3>Page Views</h3>
+        <p id="totalViews" class="stat-number">0</p>
+      </div>
+      <div class="stat-card">
+        <h3>Confirmed</h3>
+        <p id="totalClicks" class="stat-number">0</p>
+      </div>
+      <div class="stat-card">
+        <h3>View Rate</h3>
+        <p id="viewRate" class="stat-number">0%</p>
+      </div>
+    </div>
+
+    <div class="table-container">
+      <div class="table-header-row">
+        <h2>Guest List</h2>
+        <div class="search-box">
+          <input type="text" id="inviteMasterSearch" placeholder="Search by Invite Master..." />
+          <button id="clearSearch" class="clear-search-btn">Clear</button>
+        </div>
+      </div>
+      <div class="table-wrapper">
+        <table id="inviteeTable">
+          <thead>
+            <tr>
+              <th class="checkbox-col">
+                <input type="checkbox" id="selectAllCheckbox" title="Select All">
+              </th>
+              <th>Invite Master</th>
+              <th>First Name</th>
+              <th>Last Name</th>
+              <th>Email</th>
+              <th>Link</th>
+              <th>Views</th>
+              <th>Response</th>
+              <th>Email Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody">
+            <tr>
+              <td colspan="10" class="loading">Loading data...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bulk Import Modal -->
+  <div id="bulkImportModal" class="modal hidden">
+    <div class="modal-content bulk-import-modal">
+      <div class="modal-header">
+        <h2>Bulk Import Guests</h2>
+        <button class="close-btn" onclick="closeBulkImportModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="import-instructions">
+          <h3>Instructions:</h3>
+          <ol>
+            <li>Copy your guest list from Excel (including header row)</li>
+            <li>Paste it into the text area below</li>
+            <li>Expected columns: <strong>Invite Master, First Name, Last Name, Partner First, Partner Last, Email</strong></li>
+            <li>Note: Rows with the same "Invite Master" will share a single tracking link and email</li>
+            <li>Choose whether to replace all existing guests or append to the list</li>
+            <li>Click "Preview Import" to see what will be imported</li>
+          </ol>
+        </div>
+
+        <textarea id="bulkImportData" placeholder="Paste your Excel data here (tab-separated)...
+Example:
+Invite Master	First Name	Last Name	Partner First	Partner Last	Email
+Smith Family	John	Smith	Jane	Smith	john.smith@example.com
+Smith Family	Jane	Smith			jane.smith@example.com
+Johnson	Bob	Johnson			bob@example.com"></textarea>
+
+        <div class="import-options">
+          <label>
+            <input type="radio" name="importMode" value="replace" checked>
+            <strong>Replace All</strong> - Delete all existing guests and import new ones
+          </label>
+          <label>
+            <input type="radio" name="importMode" value="append">
+            <strong>Append</strong> - Keep existing guests and add new ones
+          </label>
+        </div>
+
+        <div id="previewSection" class="hidden">
+          <h3>Preview (<span id="previewCount">0</span> guests will be imported):</h3>
+          <div class="preview-table-wrapper">
+            <table class="preview-table">
+              <thead>
+                <tr>
+                  <th>Invite Master</th>
+                  <th>First Name</th>
+                  <th>Last Name</th>
+                  <th>Email</th>
+                </tr>
+              </thead>
+              <tbody id="previewTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="import-actions">
+          <button class="cancel-btn" onclick="closeBulkImportModal()">Cancel</button>
+          <button id="previewImportBtn" class="preview-btn">Preview Import</button>
+          <button id="confirmImportBtn" class="submit-btn hidden">Confirm Import</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Email Sending Progress Modal -->
+  <div id="emailProgressModal" class="modal hidden">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Sending Emails</h2>
+      </div>
+      <div class="modal-body">
+        <div class="progress-container">
+          <p id="progressMessage">Preparing to send...</p>
+          <div class="progress-bar">
+            <div id="progressFill" class="progress-fill"></div>
+          </div>
+          <p id="progressStats">0 of 0 sent</p>
+        </div>
+        <div id="sendResults" class="send-results hidden">
+          <h3>Results:</h3>
+          <div id="resultsContent"></div>
+        </div>
+        <button id="closeProgressBtn" class="submit-btn hidden">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Email Preview Modal -->
+  <div id="emailPreviewModal" class="modal hidden">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Email Preview</h2>
+        <button class="close-btn" onclick="closeEmailPreviewModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="email-preview">
+          <div class="email-field">
+            <strong>To:</strong>
+            <span id="emailTo"></span>
+          </div>
+          <div class="email-field">
+            <strong>Status:</strong>
+            <span id="emailStatus" class="status-badge"></span>
+          </div>
+          <div class="email-field">
+            <strong>Invite Master:</strong>
+            <span id="emailInviteMaster"></span>
+          </div>
+          <div class="email-field">
+            <strong>Tracking Code:</strong>
+            <span id="emailTrackingCode"></span>
+          </div>
+          <div class="email-content-preview">
+            <h3>Email Content:</h3>
+            <div class="email-body">
+              <p id="emailGreeting"></p>
+              <p>Please save the date for our wedding celebration on <strong>April 4, 2026</strong> at <strong>London House, Chicago, IL</strong>.</p>
+              <p>Visit your personalized save-the-date page:</p>
+              <p><a id="emailLink" href="#" target="_blank"></a></p>
+              <p>Formal invitation to follow in January 2026.</p>
+              <p>With love,<br>Alfiya and Ken</p>
+            </div>
+          </div>
+          <div class="email-field">
+            <strong>Guests Included:</strong>
+            <ul id="guestsList"></ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/admin.js"></script>
+</body>
+</html>
