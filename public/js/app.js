@@ -1,6 +1,6 @@
 // Create audio element for button clicks
 const clickAudio = new Audio('/IHTBY.mp3');
-clickAudio.volume = 0.5; // Set to 50% volume
+clickAudio.volume = 0.25; // Set to 25% volume
 
 // Get URL parameters
 function getQueryParam(param) {
