@@ -162,6 +162,22 @@ h2 {
   box-shadow: 0 4px 15px rgba(139, 38, 53, 0.3);
 }
 
+.hotel-phone {
+  font-size: 0.9rem;
+  color: #666;
+  margin-top: 15px;
+}
+
+.phone-link {
+  color: #8B2635;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.phone-link:hover {
+  text-decoration: underline;
+}
+
 .button-group {
   display: flex;
   gap: 15px;
