@@ -86,15 +86,16 @@ function generateEmailHTML(greeting, saveTheDateUrl) {
     }
     .cta-button {
       display: inline-block;
-      background: #8B2635;
-      color: white;
-      text-decoration: none;
+      background: #F5E6D3;
+      color: #8B2635 !important;
+      text-decoration: none !important;
       padding: 15px 40px;
       border-radius: 50px;
       font-size: 18px;
       font-weight: bold;
       margin: 30px 0;
-      box-shadow: 0 4px 15px rgba(139, 38, 53, 0.4);
+      border: 3px solid #8B2635;
+      box-shadow: 0 4px 15px rgba(139, 38, 53, 0.3);
     }
     .footer {
       background: #F5E6D3;
