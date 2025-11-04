@@ -184,5 +184,6 @@ async function sendTestEmail(saveTheDateUrl) {
 
 module.exports = {
   sendEmail,
-  sendTestEmail
+  sendTestEmail,
+  generateEmailHTML
 };

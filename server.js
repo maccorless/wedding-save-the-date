@@ -3,7 +3,7 @@ const express = require('express');
 const path = require('path');
 const db = require('./database/db');
 const { v4: uuidv4 } = require('uuid');
-const { sendEmail, sendTestEmail } = require('./services/emailService');
+const { sendEmail, sendTestEmail, generateEmailHTML } = require('./services/emailService');
 const basicAuth = require('basic-auth');
 
 const app = express();
@@ -210,6 +210,9 @@ app.get('/api/admin/email-preview/:inviteMaster', adminAuth, (req, res) => {
         .filter(e => e)
         .join(', ');
 
+      // Generate the actual email HTML content
+      const htmlContent = generateEmailHTML(greeting, saveTheDateUrl);
+
       // Create email preview
       const emailPreview = {
         invite_master: inviteMaster,
@@ -219,6 +222,7 @@ app.get('/api/admin/email-preview/:inviteMaster', adminAuth, (req, res) => {
         unique_code: tracking.unique_code,
         status: tracking.status,
         sent_at: tracking.sent_at,
+        html_content: htmlContent,  // Add the actual HTML
         guests: guests.map(g => ({
           name: g.name,
           email: g.email

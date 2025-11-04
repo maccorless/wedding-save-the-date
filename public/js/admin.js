@@ -681,9 +681,6 @@ async function showEmailPreview(inviteMaster) {
     document.getElementById('emailTo').textContent = data.to_emails;
     document.getElementById('emailInviteMaster').textContent = data.invite_master;
     document.getElementById('emailTrackingCode').textContent = data.unique_code;
-    document.getElementById('emailGreeting').textContent = data.greeting;
-    document.getElementById('emailLink').textContent = data.save_the_date_url;
-    document.getElementById('emailLink').href = data.save_the_date_url;
 
     // Set status badge
     const statusBadge = document.getElementById('emailStatus');
@@ -698,6 +695,13 @@ async function showEmailPreview(inviteMaster) {
       li.textContent = `${guest.name}${guest.email ? ' (' + guest.email + ')' : ''}`;
       guestsList.appendChild(li);
     });
+
+    // Load the actual email HTML into the iframe
+    const iframe = document.getElementById('emailHtmlFrame');
+    const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+    iframeDoc.open();
+    iframeDoc.write(data.html_content);
+    iframeDoc.close();
 
     // Show modal
     document.getElementById('emailPreviewModal').classList.remove('hidden');

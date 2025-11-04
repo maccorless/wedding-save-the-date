@@ -164,7 +164,7 @@ Johnson	Bob	Johnson			bob@example.com"></textarea>
 
   <!-- Email Preview Modal -->
   <div id="emailPreviewModal" class="modal hidden">
-    <div class="modal-content">
+    <div class="modal-content" style="max-width: 800px;">
       <div class="modal-header">
         <h2>Email Preview</h2>
         <button class="close-btn" onclick="closeEmailPreviewModal()">&times;</button>
@@ -187,20 +187,13 @@ Johnson	Bob	Johnson			bob@example.com"></textarea>
             <strong>Tracking Code:</strong>
             <span id="emailTrackingCode"></span>
           </div>
-          <div class="email-content-preview">
-            <h3>Email Content:</h3>
-            <div class="email-body">
-              <p id="emailGreeting"></p>
-              <p>Please save the date for our wedding celebration on <strong>April 4, 2026</strong> at <strong>London House, Chicago, IL</strong>.</p>
-              <p>Visit your personalized save-the-date page:</p>
-              <p><a id="emailLink" href="#" target="_blank"></a></p>
-              <p>Formal invitation to follow in January 2026.</p>
-              <p>With love,<br>Alfiya and Ken</p>
-            </div>
-          </div>
           <div class="email-field">
             <strong>Guests Included:</strong>
             <ul id="guestsList"></ul>
+          </div>
+          <div class="email-content-preview">
+            <h3>Email Preview:</h3>
+            <iframe id="emailHtmlFrame" style="width: 100%; height: 600px; border: 1px solid #ddd; border-radius: 4px; background: white;"></iframe>
           </div>
         </div>
       </div>
