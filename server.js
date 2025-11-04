@@ -506,10 +506,15 @@ app.post('/api/admin/email/test', adminAuth, async (req, res) => {
   try {
     // Get the tracking code for test
     const testUrl = `${BASE_URL}/?code=test-code`;
+    const testEmail = process.env.TEST_EMAIL_TO || 'ken@corless.com';
     const result = await sendTestEmail(testUrl);
 
     if (result.success) {
-      res.json({ success: true, message: 'Test email sent successfully!' });
+      res.json({
+        success: true,
+        message: `Test email sent successfully! Check your inbox at ${testEmail}`,
+        messageId: result.messageId
+      });
     } else {
       res.status(500).json({ error: result.error });
     }
