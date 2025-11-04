@@ -128,25 +128,24 @@ function generateEmailHTML(greeting, saveTheDateUrl) {
       <div class="divider"></div>
 
       <p class="names">Alfiya and Ken Corless</p>
-      <p class="subtitle">Request the pleasure of your company</p>
+      <p class="subtitle">Save the Date</p>
 
       <div class="date-box">
         <div class="date">April 4, 2026</div>
-        <div class="location">London House, Chicago, IL</div>
+        <div class="location">Chicago, IL</div>
       </div>
 
       <div class="divider"></div>
 
       <p class="message">
         ${greeting},<br><br>
-        We are delighted to invite you to celebrate our wedding! As our celebration falls on Easter Saturday and many of our loved ones are traveling from out of town, we would be grateful for a preliminary sense of headcount.<br><br>
-        Please know this is completely non-binding—we understand that plans may change, and we would be delighted to have you join us if your schedule allows.
+        We are finally celebrating our January 24, 2025 wedding and would love to have you celebrate with us!
       </p>
 
-      <a href="${saveTheDateUrl}" class="cta-button">View Your Save-the-Date</a>
+      <a href="${saveTheDateUrl}" class="cta-button">View Your Personalized Invitation</a>
 
       <p class="message" style="font-size: 14px;">
-        Formal invitation to follow in January 2026
+        Please click above to see all the details and let us know if you're planning to join us.
       </p>
     </div>
 
