@@ -1,7 +1,14 @@
 const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
+const fs = require('fs');
 
-const dbPath = path.join(__dirname, 'wedding.db');
+// Use /app/data for production (Railway volume), otherwise use local database folder
+const dataDir = '/app/data';
+const dbPath = fs.existsSync(dataDir)
+  ? path.join(dataDir, 'wedding.db')
+  : path.join(__dirname, 'wedding.db');
+
+console.log('Database path:', dbPath);
 const db = new sqlite3.Database(dbPath);
 
 // Initialize database schema
