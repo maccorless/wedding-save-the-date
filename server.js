@@ -208,11 +208,25 @@ app.get('/api/admin/email-preview/:inviteMaster', adminAuth, (req, res) => {
         return res.status(500).json({ error: 'Database error' });
       }
 
+      // If no tracking record exists, use the unique_code from the first guest
+      let uniqueCode, status, sentAt;
+
+      if (!tracking) {
+        // Use unique_code from guests table
+        uniqueCode = guests[0].unique_code;
+        status = 'drafted';
+        sentAt = null;
+      } else {
+        uniqueCode = tracking.unique_code;
+        status = tracking.status;
+        sentAt = tracking.sent_at;
+      }
+
       // Generate greeting using invite_master (matches actual email sending)
       const greeting = `Dear ${inviteMaster}`;
 
       // Generate email URL
-      const saveTheDateUrl = `${BASE_URL}/?code=${tracking.unique_code}`;
+      const saveTheDateUrl = `${BASE_URL}/?code=${uniqueCode}`;
 
       // Collect all email addresses
       const emailAddresses = guests
@@ -229,9 +243,9 @@ app.get('/api/admin/email-preview/:inviteMaster', adminAuth, (req, res) => {
         greeting: greeting,
         to_emails: emailAddresses || 'No email addresses',
         save_the_date_url: saveTheDateUrl,
-        unique_code: tracking.unique_code,
-        status: tracking.status,
-        sent_at: tracking.sent_at,
+        unique_code: uniqueCode,
+        status: status,
+        sent_at: sentAt,
         html_content: htmlContent,  // Add the actual HTML
         guests: guests.map(g => ({
           name: g.name,
