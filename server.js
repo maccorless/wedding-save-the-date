@@ -13,8 +13,13 @@ const BASE_URL = process.env.BASE_URL || `http://localhost:${PORT}`;
 // Trust proxy (required for Railway to detect HTTPS)
 app.set('trust proxy', 1);
 
-// Middleware to redirect HTTP to HTTPS in production
+// Middleware to redirect HTTP to HTTPS in production (except health checks)
 app.use((req, res, next) => {
+  // Skip redirect for health check endpoint
+  if (req.path === '/health') {
+    return next();
+  }
+
   if (process.env.NODE_ENV === 'production' && req.headers['x-forwarded-proto'] !== 'https') {
     return res.redirect(301, `https://${req.headers.host}${req.url}`);
   }
@@ -37,6 +42,11 @@ const adminAuth = (req, res, next) => {
   }
   next();
 };
+
+// Health check endpoint for Railway
+app.get('/health', (req, res) => {
+  res.status(200).json({ status: 'healthy', timestamp: new Date().toISOString() });
+});
 
 // Serve save-the-date page
 app.get('/', (req, res) => {
