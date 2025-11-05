@@ -153,7 +153,13 @@ function createGroupEditRow(group, groupIndex) {
 
   row.innerHTML = `
     <td class="checkbox-col">-</td>
-    <td><input type="text" class="edit-input" data-field="invite_master" value="${masterName}" required></td>
+    <td>
+      <input type="text" class="edit-input" data-field="invite_master" value="${masterName}" required>
+      <input type="hidden" class="edit-input" data-field="first_name" value="${firstInvitee.first_name || ''}">
+      <input type="hidden" class="edit-input" data-field="last_name" value="${firstInvitee.last_name || ''}">
+      <input type="hidden" class="edit-input" data-field="partner_first_name" value="${firstInvitee.partner_first_name || ''}">
+      <input type="hidden" class="edit-input" data-field="partner_last_name" value="${firstInvitee.partner_last_name || ''}">
+    </td>
     <td colspan="2" style="font-size: 0.9em; color: #666; padding: 8px;">${namesDisplay} (edit individuals to change names)</td>
     <td><input type="email" class="edit-input" data-field="email" value="${emailsDisplay}"></td>
     <td class="link-cell">
