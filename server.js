@@ -616,13 +616,24 @@ app.post('/api/admin/email/send', adminAuth, async (req, res) => {
 
       if (emailResult.success) {
         // Update email tracking status
+        console.log(`Updating email_tracking for invite_master: "${inviteMaster}" (length: ${inviteMaster.length})`);
+
         await new Promise((resolve, reject) => {
           db.run(
             'UPDATE email_tracking SET status = ?, sent_at = CURRENT_TIMESTAMP WHERE invite_master = ?',
             ['sent', inviteMaster],
-            (err) => {
-              if (err) reject(err);
-              else resolve();
+            function(err) {
+              if (err) {
+                console.error(`Database UPDATE error for "${inviteMaster}":`, err);
+                reject(err);
+              } else if (this.changes === 0) {
+                console.error(`WARNING: UPDATE matched 0 rows for invite_master: "${inviteMaster}"`);
+                console.error(`This suggests the invite_master value doesn't match any record in email_tracking table`);
+                reject(new Error(`No email_tracking record found for invite_master: "${inviteMaster}"`));
+              } else {
+                console.log(`Successfully updated ${this.changes} row(s) for "${inviteMaster}"`);
+                resolve();
+              }
             }
           );
         });
