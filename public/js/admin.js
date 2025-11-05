@@ -133,6 +133,55 @@ function createDisplayRow(invitee, isFirstInGroup = false, groupIndex = 0) {
   return row;
 }
 
+// Create edit row for group
+function createGroupEditRow(group, groupIndex) {
+  const invitees = group.invitees;
+  const firstInvitee = invitees[0];
+  const masterName = firstInvitee.invite_master || firstInvitee.name;
+
+  const row = document.createElement('tr');
+  row.classList.add('edit-mode');
+  row.dataset.id = firstInvitee.id;
+  row.dataset.inviteMaster = masterName;
+  row.dataset.inviteMasterGroup = groupIndex % 2 === 0 ? 'even' : 'odd';
+
+  const uniqueLink = `${window.location.origin}/?code=${firstInvitee.unique_code}`;
+
+  // Build editable fields
+  let namesDisplay = invitees.map(inv => `${inv.first_name || ''} ${inv.last_name || ''}`).join(' & ');
+  let emailsDisplay = invitees.map(inv => inv.email).filter(e => e).join(', ') || '';
+
+  row.innerHTML = `
+    <td class="checkbox-col">-</td>
+    <td><input type="text" class="edit-input" data-field="invite_master" value="${masterName}" required></td>
+    <td colspan="2" style="font-size: 0.9em; color: #666; padding: 8px;">${namesDisplay} (edit individuals to change names)</td>
+    <td><input type="email" class="edit-input" data-field="email" value="${emailsDisplay}"></td>
+    <td class="link-cell">
+      <button class="copy-btn" onclick="copyToClipboard('${uniqueLink}')">Copy Link</button>
+    </td>
+    <td class="${firstInvitee.view_count > 0 ? 'status-viewed' : 'status-not-viewed'}">
+      ${firstInvitee.view_count}
+    </td>
+    <td class="${group.mostRecentResponse === 'planning' ? 'status-planning' : group.mostRecentResponse === 'unlikely' ? 'status-unlikely' : ''}">
+      ${group.mostRecentResponse === 'planning' ? 'Planning' : group.mostRecentResponse === 'unlikely' ? 'Unlikely' : '-'}
+    </td>
+    <td>
+      <select class="edit-input" data-field="email_status" style="padding: 4px 8px; border: 1px solid #ddd; border-radius: 4px;">
+        <option value="drafted" ${(firstInvitee.email_status || 'drafted') === 'drafted' ? 'selected' : ''}>drafted</option>
+        <option value="sent" ${firstInvitee.email_status === 'sent' ? 'selected' : ''}>sent</option>
+      </select>
+    </td>
+    <td>
+      <div class="action-btns">
+        <button class="icon-btn save-btn" onclick="saveRow(this)" title="Save">✓</button>
+        <button class="icon-btn cancel-btn" onclick="cancelEdit(this)" title="Cancel">✕</button>
+      </div>
+    </td>
+  `;
+
+  return row;
+}
+
 // Create edit row
 function createEditRow(invitee) {
   const row = document.createElement('tr');
@@ -199,8 +248,40 @@ function cancelEdit(btn) {
   const invitee = guestData.find(g => g.id === parseInt(id));
   if (!invitee) return;
 
-  const newRow = createDisplayRow(invitee);
-  row.replaceWith(newRow);
+  // Check if this is a group row by checking if it has invite_master dataset
+  if (row.dataset.inviteMaster) {
+    // It's a group row - recreate the group display
+    const masterName = invitee.invite_master || invitee.name;
+    const inviteesInGroup = guestData.filter(inv =>
+      (inv.invite_master || inv.name) === masterName
+    );
+
+    // Get most recent response
+    let mostRecentResponse = null;
+    let mostRecentDate = null;
+    inviteesInGroup.forEach(inv => {
+      if (inv.last_clicked) {
+        const clickedDate = new Date(inv.last_clicked);
+        if (!mostRecentDate || clickedDate > mostRecentDate) {
+          mostRecentResponse = inv.response_type;
+          mostRecentDate = clickedDate;
+        }
+      }
+    });
+
+    const group = {
+      invitees: inviteesInGroup,
+      mostRecentResponse: mostRecentResponse
+    };
+
+    const groupIndex = parseInt(row.dataset.inviteMasterGroup === 'even' ? 0 : 1);
+    const newRow = createGroupDisplayRow(group, groupIndex);
+    row.replaceWith(newRow);
+  } else {
+    // It's an individual row
+    const newRow = createDisplayRow(invitee);
+    row.replaceWith(newRow);
+  }
 }
 
 // Save row
@@ -296,15 +377,43 @@ async function deleteGuest(id, name) {
   }
 }
 
-// Edit group (redirects to editing first person in group)
+// Edit group
 function editGroup(firstInviteeId) {
   const row = document.querySelector(`tr[data-id="${firstInviteeId}"]`);
-  if (row) {
-    const editBtn = row.querySelector('.edit-btn');
-    if (editBtn) {
-      editRow(editBtn);
+  if (!row) return;
+
+  const firstInvitee = guestData.find(g => g.id === firstInviteeId);
+  if (!firstInvitee) return;
+
+  const masterName = firstInvitee.invite_master || firstInvitee.name;
+
+  // Find all invitees in this group
+  const inviteesInGroup = guestData.filter(inv =>
+    (inv.invite_master || inv.name) === masterName
+  );
+
+  // Get most recent response
+  let mostRecentResponse = null;
+  let mostRecentDate = null;
+  inviteesInGroup.forEach(inv => {
+    if (inv.last_clicked) {
+      const clickedDate = new Date(inv.last_clicked);
+      if (!mostRecentDate || clickedDate > mostRecentDate) {
+        mostRecentResponse = inv.response_type;
+        mostRecentDate = clickedDate;
+      }
     }
-  }
+  });
+
+  const group = {
+    invitees: inviteesInGroup,
+    mostRecentResponse: mostRecentResponse
+  };
+
+  const groupIndex = parseInt(row.dataset.inviteMasterGroup === 'even' ? 0 : 1);
+  const newRow = createGroupEditRow(group, groupIndex);
+  row.replaceWith(newRow);
+  newRow.querySelector('input').focus();
 }
 
 // Delete entire invite_master group
