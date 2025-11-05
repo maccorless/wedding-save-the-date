@@ -420,6 +420,10 @@ async function loadStats() {
       checkedInviteMasters.add(cb.dataset.inviteMaster);
     });
 
+    // Save search filter state
+    const searchInput = document.getElementById('inviteMasterSearch');
+    const currentSearchTerm = searchInput ? searchInput.value : '';
+
     // Populate table - group by invite_master to show one row per group
     const tableBody = document.getElementById('tableBody');
     tableBody.innerHTML = '';
@@ -443,6 +447,11 @@ async function loadStats() {
         checkbox.checked = true;
       }
     });
+
+    // Restore search filter
+    if (currentSearchTerm) {
+      filterByInviteMaster(currentSearchTerm);
+    }
 
     // Update send button count
     updateSendButton();
@@ -984,5 +993,5 @@ document.getElementById('clearSearch').addEventListener('click', function() {
 // Load stats on page load
 loadStats();
 
-// Auto-refresh every 30 seconds
-setInterval(loadStats, 30000);
+// Auto-refresh every 60 seconds to keep data current
+setInterval(loadStats, 60000);
