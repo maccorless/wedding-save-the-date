@@ -8,7 +8,8 @@
     "build": "echo 'No build step needed'",
     "dev": "node server.js",
     "fix-tracking": "node utils/fix-email-tracking.js",
-    "mark-sent": "node utils/mark-emails-sent.js"
+    "mark-sent": "node utils/mark-emails-sent.js",
+    "diagnose": "node utils/diagnose-database.js"
   },
   "keywords": [
     "wedding",
