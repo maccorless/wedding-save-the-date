@@ -698,8 +698,65 @@ app.post('/api/admin/reset-stats', adminAuth, (req, res) => {
   });
 });
 
-app.listen(PORT, '0.0.0.0', () => {
+// Global error handlers - prevent crashes from uncaught errors
+process.on('uncaughtException', (err) => {
+  console.error('UNCAUGHT EXCEPTION! Shutting down gracefully...');
+  console.error(err.name, err.message, err.stack);
+  // Give server time to finish existing requests
+  setTimeout(() => {
+    process.exit(1);
+  }, 1000);
+});
+
+process.on('unhandledRejection', (err) => {
+  console.error('UNHANDLED REJECTION! Shutting down gracefully...');
+  console.error(err);
+  // Give server time to finish existing requests
+  setTimeout(() => {
+    process.exit(1);
+  }, 1000);
+});
+
+const server = app.listen(PORT, '0.0.0.0', () => {
   console.log(`Wedding Save-the-Date server running on ${BASE_URL}`);
   console.log(`Admin dashboard available at ${BASE_URL}/admin`);
   console.log(`Server listening on port ${PORT}`);
+});
+
+// Graceful shutdown on SIGTERM (Railway sends this when stopping)
+process.on('SIGTERM', () => {
+  console.log('SIGTERM received. Closing server gracefully...');
+  server.close(() => {
+    console.log('Server closed. Closing database connection...');
+    db.close((err) => {
+      if (err) {
+        console.error('Error closing database:', err);
+        process.exit(1);
+      }
+      console.log('Database closed. Process exiting.');
+      process.exit(0);
+    });
+  });
+
+  // Force close after 10 seconds
+  setTimeout(() => {
+    console.error('Forced shutdown after timeout');
+    process.exit(1);
+  }, 10000);
+});
+
+// Graceful shutdown on SIGINT (Ctrl+C locally)
+process.on('SIGINT', () => {
+  console.log('SIGINT received. Closing server gracefully...');
+  server.close(() => {
+    console.log('Server closed. Closing database connection...');
+    db.close((err) => {
+      if (err) {
+        console.error('Error closing database:', err);
+        process.exit(1);
+      }
+      console.log('Database closed. Process exiting.');
+      process.exit(0);
+    });
+  });
 });

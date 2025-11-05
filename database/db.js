@@ -9,7 +9,18 @@ const dbPath = fs.existsSync(dataDir)
   : path.join(__dirname, 'wedding.db');
 
 console.log('Database path:', dbPath);
-const db = new sqlite3.Database(dbPath);
+const db = new sqlite3.Database(dbPath, (err) => {
+  if (err) {
+    console.error('Failed to open database:', err);
+    process.exit(1);
+  }
+  console.log('Database connection established');
+});
+
+// Handle database errors
+db.on('error', (err) => {
+  console.error('Database error:', err);
+});
 
 // Initialize database schema
 db.serialize(() => {
@@ -31,13 +42,22 @@ db.serialize(() => {
   `);
 
   // Add new columns to existing table if they don't exist
-  db.run(`ALTER TABLE invitees ADD COLUMN first_name TEXT`, () => {});
-  db.run(`ALTER TABLE invitees ADD COLUMN last_name TEXT`, () => {});
-  db.run(`ALTER TABLE invitees ADD COLUMN email TEXT`, () => {});
-  db.run(`ALTER TABLE invitees ADD COLUMN partner_first_name TEXT`, () => {});
-  db.run(`ALTER TABLE invitees ADD COLUMN partner_last_name TEXT`, () => {});
-  db.run(`ALTER TABLE invitees ADD COLUMN partner_email TEXT`, () => {});
-  db.run(`ALTER TABLE invitees ADD COLUMN invite_master TEXT`, () => {});
+  // Note: ALTER TABLE will fail if column exists, which is expected
+  const addColumnIfNotExists = (sql, columnName) => {
+    db.run(sql, (err) => {
+      if (err && !err.message.includes('duplicate column')) {
+        console.error(`Error adding column ${columnName}:`, err);
+      }
+    });
+  };
+
+  addColumnIfNotExists(`ALTER TABLE invitees ADD COLUMN first_name TEXT`, 'first_name');
+  addColumnIfNotExists(`ALTER TABLE invitees ADD COLUMN last_name TEXT`, 'last_name');
+  addColumnIfNotExists(`ALTER TABLE invitees ADD COLUMN email TEXT`, 'email');
+  addColumnIfNotExists(`ALTER TABLE invitees ADD COLUMN partner_first_name TEXT`, 'partner_first_name');
+  addColumnIfNotExists(`ALTER TABLE invitees ADD COLUMN partner_last_name TEXT`, 'partner_last_name');
+  addColumnIfNotExists(`ALTER TABLE invitees ADD COLUMN partner_email TEXT`, 'partner_email');
+  addColumnIfNotExists(`ALTER TABLE invitees ADD COLUMN invite_master TEXT`, 'invite_master');
 
   // Table for page views
   db.run(`
@@ -61,7 +81,7 @@ db.serialize(() => {
   `);
 
   // Add response_type column to existing table if it doesn't exist
-  db.run(`ALTER TABLE button_clicks ADD COLUMN response_type TEXT`, () => {});
+  addColumnIfNotExists(`ALTER TABLE button_clicks ADD COLUMN response_type TEXT`, 'response_type');
 
   // Table for email tracking by invite master
   db.run(`
