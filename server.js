@@ -167,6 +167,7 @@ app.get('/api/admin/stats', adminAuth, (req, res) => {
        JOIN invitees i2 ON bc.invitee_id = i2.id
        WHERE i2.unique_code = i.unique_code
        ORDER BY clicked_at DESC LIMIT 1) as last_clicked,
+      (SELECT id FROM email_tracking WHERE invite_master = i.invite_master) as email_tracking_id,
       (SELECT status FROM email_tracking WHERE invite_master = i.invite_master) as email_status
     FROM invitees i
     ORDER BY i.invite_master, i.last_name, i.first_name
@@ -375,16 +376,23 @@ app.put('/api/admin/invitees/:id', adminAuth, (req, res) => {
 
       // If email_status was provided, update the email_tracking table
       if (email_status && (email_status === 'drafted' || email_status === 'sent')) {
-        const trackingQuery = email_status === 'sent'
-          ? 'UPDATE email_tracking SET status = ?, sent_at = CURRENT_TIMESTAMP WHERE invite_master = ?'
-          : 'UPDATE email_tracking SET status = ?, sent_at = NULL WHERE invite_master = ?';
+        const { email_tracking_id } = req.body;
 
-        db.run(trackingQuery, [email_status, invite_master], function(trackingErr) {
+        if (!email_tracking_id) {
+          console.error(`No email_tracking_id provided for invitee ${id}`);
+          return res.json({ success: true }); // Don't fail the invitee update
+        }
+
+        const trackingQuery = email_status === 'sent'
+          ? 'UPDATE email_tracking SET status = ?, sent_at = CURRENT_TIMESTAMP WHERE id = ?'
+          : 'UPDATE email_tracking SET status = ?, sent_at = NULL WHERE id = ?';
+
+        db.run(trackingQuery, [email_status, email_tracking_id], function(trackingErr) {
           if (trackingErr) {
-            console.error(`Error updating email_tracking for ${invite_master}:`, trackingErr);
+            console.error(`Error updating email_tracking id ${email_tracking_id}:`, trackingErr);
             // Don't fail the whole request, just log the error
           } else {
-            console.log(`Updated email_tracking status to '${email_status}' for ${invite_master} (${this.changes} row(s))`);
+            console.log(`Updated email_tracking id ${email_tracking_id} status to '${email_status}' (${this.changes} row(s))`);
           }
           res.json({ success: true });
         });

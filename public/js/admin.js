@@ -159,6 +159,7 @@ function createGroupEditRow(group, groupIndex) {
       <input type="hidden" class="edit-input" data-field="last_name" value="${firstInvitee.last_name || ''}">
       <input type="hidden" class="edit-input" data-field="partner_first_name" value="${firstInvitee.partner_first_name || ''}">
       <input type="hidden" class="edit-input" data-field="partner_last_name" value="${firstInvitee.partner_last_name || ''}">
+      <input type="hidden" class="edit-input" data-field="email_tracking_id" value="${firstInvitee.email_tracking_id || ''}">
     </td>
     <td colspan="2" style="font-size: 0.9em; color: #666; padding: 8px;">${namesDisplay} (edit individuals to change names)</td>
     <td><input type="email" class="edit-input" data-field="email" value="${emailsDisplay}"></td>
