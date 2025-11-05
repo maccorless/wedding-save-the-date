@@ -993,5 +993,4 @@ document.getElementById('clearSearch').addEventListener('click', function() {
 // Load stats on page load
 loadStats();
 
-// Auto-refresh every 60 seconds to keep data current
-setInterval(loadStats, 60000);
+// Note: Auto-refresh disabled - use "Refresh Data" button to manually update
