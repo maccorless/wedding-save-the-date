@@ -398,18 +398,27 @@ async function loadStats() {
       }
     });
 
-    // Count invite_master groups with views (not individual people)
-    const groupsWithViews = Object.values(inviteMasterGroups).filter(group =>
+    // Count invite_master groups with views - only for groups with sent emails
+    const sentGroups = Object.values(inviteMasterGroups).filter(group =>
+      group.invitees.some(inv => inv.email_status === 'sent')
+    );
+    const groupsWithViews = sentGroups.filter(group =>
       group.invitees.some(inv => inv.view_count > 0)
     ).length;
-    const totalGroups = Object.keys(inviteMasterGroups).length;
-    const viewRate = totalGroups > 0 ? Math.round((groupsWithViews / totalGroups) * 100) : 0;
+    const totalSentGroups = sentGroups.length;
+    const viewRate = totalSentGroups > 0 ? Math.round((groupsWithViews / totalSentGroups) * 100) : 0;
 
     // Update summary cards
     document.getElementById('totalInvitees').textContent = totalInvitees;
     document.getElementById('totalViews').textContent = totalViews;
     document.getElementById('totalClicks').textContent = totalConfirmed;
     document.getElementById('viewRate').textContent = `${viewRate}%`;
+
+    // Save checkbox state before rebuilding table
+    const checkedInviteMasters = new Set();
+    document.querySelectorAll('.row-checkbox:checked').forEach(cb => {
+      checkedInviteMasters.add(cb.dataset.inviteMaster);
+    });
 
     // Populate table - group by invite_master to show one row per group
     const tableBody = document.getElementById('tableBody');
@@ -426,6 +435,17 @@ async function loadStats() {
       const row = createGroupDisplayRow(group, groupIndex);
       tableBody.appendChild(row);
     });
+
+    // Restore checkbox state
+    checkedInviteMasters.forEach(masterName => {
+      const checkbox = document.querySelector(`.row-checkbox[data-invite-master="${masterName}"]`);
+      if (checkbox && !checkbox.disabled) {
+        checkbox.checked = true;
+      }
+    });
+
+    // Update send button count
+    updateSendButton();
 
   } catch (error) {
     console.error('Error loading stats:', error);
