@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node server.js",
-    "fix-tracking": "node utils/fix-email-tracking.js"
+    "fix-tracking": "node utils/fix-email-tracking.js",
+    "mark-sent": "node utils/mark-emails-sent.js"
   },
   "keywords": [
     "wedding",
