@@ -5,6 +5,7 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
+    "build": "echo 'No build step needed'",
     "dev": "node server.js",
     "fix-tracking": "node utils/fix-email-tracking.js",
     "mark-sent": "node utils/mark-emails-sent.js"
