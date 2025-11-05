@@ -157,7 +157,10 @@ function createEditRow(invitee) {
       ${invitee.response_type === 'planning' ? 'Planning' : invitee.response_type === 'unlikely' ? 'Unlikely' : '-'}
     </td>
     <td>
-      <span class="status-badge ${invitee.email_status || 'drafted'}">${invitee.email_status || 'drafted'}</span>
+      <select class="edit-input" data-field="email_status" style="padding: 4px 8px; border: 1px solid #ddd; border-radius: 4px;">
+        <option value="drafted" ${(invitee.email_status || 'drafted') === 'drafted' ? 'selected' : ''}>drafted</option>
+        <option value="sent" ${invitee.email_status === 'sent' ? 'selected' : ''}>sent</option>
+      </select>
     </td>
     <td>
       <div class="action-btns">

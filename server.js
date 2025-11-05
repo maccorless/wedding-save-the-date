@@ -341,7 +341,8 @@ app.put('/api/admin/invitees/:id', adminAuth, (req, res) => {
     email,
     partner_first_name,
     partner_last_name,
-    invite_master
+    invite_master,
+    email_status
   } = req.body;
 
   if (!first_name || !last_name || !invite_master) {
@@ -371,7 +372,25 @@ app.put('/api/admin/invitees/:id', adminAuth, (req, res) => {
       if (this.changes === 0) {
         return res.status(404).json({ error: 'Invitee not found' });
       }
-      res.json({ success: true });
+
+      // If email_status was provided, update the email_tracking table
+      if (email_status && (email_status === 'drafted' || email_status === 'sent')) {
+        const trackingQuery = email_status === 'sent'
+          ? 'UPDATE email_tracking SET status = ?, sent_at = CURRENT_TIMESTAMP WHERE invite_master = ?'
+          : 'UPDATE email_tracking SET status = ?, sent_at = NULL WHERE invite_master = ?';
+
+        db.run(trackingQuery, [email_status, invite_master], function(trackingErr) {
+          if (trackingErr) {
+            console.error(`Error updating email_tracking for ${invite_master}:`, trackingErr);
+            // Don't fail the whole request, just log the error
+          } else {
+            console.log(`Updated email_tracking status to '${email_status}' for ${invite_master} (${this.changes} row(s))`);
+          }
+          res.json({ success: true });
+        });
+      } else {
+        res.json({ success: true });
+      }
     }
   );
 });
