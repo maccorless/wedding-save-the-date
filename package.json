@@ -9,7 +9,8 @@
     "dev": "node server.js",
     "fix-tracking": "node utils/fix-email-tracking.js",
     "mark-sent": "node utils/mark-emails-sent.js",
-    "diagnose": "node utils/diagnose-database.js"
+    "diagnose": "node utils/diagnose-database.js",
+    "create-tracking": "node utils/create-missing-tracking.js"
   },
   "keywords": [
     "wedding",
