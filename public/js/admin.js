@@ -48,17 +48,19 @@ function applyFilter() {
 
     if (activeFilter === 'views') {
       // Show only rows with view_count > 0
-      const viewCell = row.cells[6]; // Views column
+      // Columns: 0=checkbox, 1=invite_master, 2=names(colspan=2), 3=email, 4=link, 5=views
+      const viewCell = row.cells[5]; // Views column
       const viewCount = parseInt(viewCell.textContent) || 0;
       shouldShow = viewCount > 0;
     } else if (activeFilter === 'confirmed') {
       // Show only rows with response = 'Planning'
-      const responseCell = row.cells[7]; // Response column
+      // Columns: ..., 5=views, 6=response
+      const responseCell = row.cells[6]; // Response column
       const responseText = responseCell.textContent.trim();
       shouldShow = responseText === 'Planning';
     } else if (activeFilter === 'unlikely') {
       // Show only rows with response = 'Unlikely'
-      const responseCell = row.cells[7]; // Response column
+      const responseCell = row.cells[6]; // Response column
       const responseText = responseCell.textContent.trim();
       shouldShow = responseText === 'Unlikely';
     }
