@@ -137,6 +137,26 @@ h1 {
   color: #667eea;
 }
 
+.stat-card.clickable {
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.stat-card.clickable:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+.stat-card.clickable.active {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  box-shadow: 0 4px 20px rgba(102, 126, 234, 0.5);
+}
+
+.stat-card.clickable.active h3,
+.stat-card.clickable.active .stat-number {
+  color: white;
+}
+
 .table-container {
   background: white;
   padding: 30px;

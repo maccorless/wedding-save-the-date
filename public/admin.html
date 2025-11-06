@@ -25,13 +25,17 @@
         <h3>Total Invitees</h3>
         <p id="totalInvitees" class="stat-number">0</p>
       </div>
-      <div class="stat-card">
+      <div class="stat-card clickable" data-filter="views" onclick="toggleFilter('views')">
         <h3>Page Views</h3>
         <p id="totalViews" class="stat-number">0</p>
       </div>
-      <div class="stat-card">
+      <div class="stat-card clickable" data-filter="confirmed" onclick="toggleFilter('confirmed')">
         <h3>Confirmed</h3>
         <p id="totalClicks" class="stat-number">0</p>
+      </div>
+      <div class="stat-card clickable" data-filter="unlikely" onclick="toggleFilter('unlikely')">
+        <h3>Unlikely</h3>
+        <p id="totalUnlikely" class="stat-number">0</p>
       </div>
       <div class="stat-card">
         <h3>View Rate</h3>

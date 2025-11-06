@@ -7,6 +7,65 @@ function formatDateTime(dateString) {
 
 // Store current data
 let guestData = [];
+let activeFilter = null; // Track active filter: 'views', 'confirmed', 'unlikely', or null
+
+// Toggle filter when stat card is clicked
+function toggleFilter(filterType) {
+  // If clicking the same filter, turn it off
+  if (activeFilter === filterType) {
+    activeFilter = null;
+  } else {
+    activeFilter = filterType;
+  }
+
+  // Update active state on stat cards
+  document.querySelectorAll('.stat-card.clickable').forEach(card => {
+    card.classList.remove('active');
+  });
+
+  if (activeFilter) {
+    const activeCard = document.querySelector(`.stat-card[data-filter="${activeFilter}"]`);
+    if (activeCard) {
+      activeCard.classList.add('active');
+    }
+  }
+
+  // Apply filter to currently displayed rows
+  applyFilter();
+}
+
+// Apply active filter to table rows
+function applyFilter() {
+  const tableBody = document.getElementById('tableBody');
+  const rows = tableBody.querySelectorAll('tr');
+
+  rows.forEach(row => {
+    if (row.classList.contains('edit-mode') || row.classList.contains('loading')) {
+      return; // Don't filter edit rows or loading messages
+    }
+
+    let shouldShow = true;
+
+    if (activeFilter === 'views') {
+      // Show only rows with view_count > 0
+      const viewCell = row.cells[6]; // Views column
+      const viewCount = parseInt(viewCell.textContent) || 0;
+      shouldShow = viewCount > 0;
+    } else if (activeFilter === 'confirmed') {
+      // Show only rows with response = 'Planning'
+      const responseCell = row.cells[7]; // Response column
+      const responseText = responseCell.textContent.trim();
+      shouldShow = responseText === 'Planning';
+    } else if (activeFilter === 'unlikely') {
+      // Show only rows with response = 'Unlikely'
+      const responseCell = row.cells[7]; // Response column
+      const responseText = responseCell.textContent.trim();
+      shouldShow = responseText === 'Unlikely';
+    }
+
+    row.style.display = shouldShow ? '' : 'none';
+  });
+}
 
 // Create a new empty row for adding a guest
 function createNewRow() {
@@ -510,10 +569,14 @@ async function loadStats() {
 
     // Count confirmed people (those whose invite_master has most recent response = "planning")
     let totalConfirmed = 0;
+    let totalUnlikely = 0;
     Object.values(inviteMasterGroups).forEach(group => {
       if (group.mostRecentResponse === 'planning') {
         // Count the number of people in this group (1 or 2)
         totalConfirmed += group.invitees.length;
+      } else if (group.mostRecentResponse === 'unlikely') {
+        // Count the number of people who said unlikely
+        totalUnlikely += group.invitees.length;
       }
     });
 
@@ -531,6 +594,7 @@ async function loadStats() {
     document.getElementById('totalInvitees').textContent = totalInvitees;
     document.getElementById('totalViews').textContent = totalViews;
     document.getElementById('totalClicks').textContent = totalConfirmed;
+    document.getElementById('totalUnlikely').textContent = totalUnlikely;
     document.getElementById('viewRate').textContent = `${viewRate}%`;
 
     // Save checkbox state before rebuilding table
@@ -571,6 +635,9 @@ async function loadStats() {
     if (currentSearchTerm) {
       filterByInviteMaster(currentSearchTerm);
     }
+
+    // Apply active stat filter
+    applyFilter();
 
     // Update send button count
     updateSendButton();
