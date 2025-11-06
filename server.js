@@ -167,8 +167,8 @@ app.get('/api/admin/stats', adminAuth, (req, res) => {
        JOIN invitees i2 ON bc.invitee_id = i2.id
        WHERE i2.unique_code = i.unique_code
        ORDER BY clicked_at DESC LIMIT 1) as last_clicked,
-      (SELECT id FROM email_tracking WHERE invite_master = i.invite_master) as email_tracking_id,
-      (SELECT status FROM email_tracking WHERE invite_master = i.invite_master) as email_status
+      (SELECT id FROM email_tracking WHERE unique_code = i.unique_code) as email_tracking_id,
+      (SELECT status FROM email_tracking WHERE unique_code = i.unique_code) as email_status
     FROM invitees i
     ORDER BY i.invite_master, i.last_name, i.first_name
   `;
@@ -642,21 +642,21 @@ app.post('/api/admin/email/send', adminAuth, async (req, res) => {
       const emailResult = await sendEmail(emailAddresses, inviteMaster, saveTheDateUrl, invitees);
 
       if (emailResult.success) {
-        // Update email tracking status
-        console.log(`Updating email_tracking for invite_master: "${inviteMaster}" (length: ${inviteMaster.length})`);
+        // Update email tracking status using unique_code (stable identifier)
+        console.log(`Updating email_tracking for "${inviteMaster}" (unique_code: ${uniqueCode})`);
 
         await new Promise((resolve, reject) => {
           db.run(
-            'UPDATE email_tracking SET status = ?, sent_at = CURRENT_TIMESTAMP WHERE invite_master = ?',
-            ['sent', inviteMaster],
+            'UPDATE email_tracking SET status = ?, sent_at = CURRENT_TIMESTAMP WHERE unique_code = ?',
+            ['sent', uniqueCode],
             function(err) {
               if (err) {
                 console.error(`Database UPDATE error for "${inviteMaster}":`, err);
                 reject(err);
               } else if (this.changes === 0) {
-                console.error(`WARNING: UPDATE matched 0 rows for invite_master: "${inviteMaster}"`);
-                console.error(`This suggests the invite_master value doesn't match any record in email_tracking table`);
-                reject(new Error(`No email_tracking record found for invite_master: "${inviteMaster}"`));
+                console.error(`WARNING: UPDATE matched 0 rows for unique_code: "${uniqueCode}"`);
+                console.error(`This suggests no email_tracking record exists for this code`);
+                reject(new Error(`No email_tracking record found for unique_code: "${uniqueCode}"`));
               } else {
                 console.log(`Successfully updated ${this.changes} row(s) for "${inviteMaster}"`);
                 resolve();
