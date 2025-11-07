@@ -523,6 +523,12 @@ async function deleteGroup(inviteMaster) {
   }
 }
 
+// Helper function to count people based on invite_master name
+function countPeopleInGroup(inviteMasterName) {
+  // If the invite_master contains "and", count as 2 people, otherwise 1
+  return inviteMasterName && inviteMasterName.toLowerCase().includes(' and ') ? 2 : 1;
+}
+
 // Load and display statistics
 async function loadStats() {
   try {
@@ -535,16 +541,21 @@ async function loadStats() {
     console.log('Loaded guest data:', data);
 
     // Calculate summary statistics
-    const totalInvitees = data.length;
+    // Get unique invite_masters and count people based on "and" in the name
+    const uniqueInviteMasters = [...new Set(data.map(inv => inv.invite_master || inv.name))];
+    const totalInvitees = uniqueInviteMasters.reduce((sum, masterName) => {
+      return sum + countPeopleInGroup(masterName);
+    }, 0);
 
-    // Calculate total views: sum view_count per unique_code (not per person)
-    const uniqueCodeViews = {};
+    // Calculate total views: count unique invite_masters with at least one view
+    const inviteMastersWithViews = new Set();
     data.forEach(inv => {
-      if (!uniqueCodeViews[inv.unique_code]) {
-        uniqueCodeViews[inv.unique_code] = inv.view_count;
+      if (inv.view_count > 0) {
+        const master = inv.invite_master || inv.name;
+        inviteMastersWithViews.add(master);
       }
     });
-    const totalViews = Object.values(uniqueCodeViews).reduce((sum, count) => sum + count, 0);
+    const totalViews = inviteMastersWithViews.size;
 
     // Calculate confirmed count: group by invite_master and count people who said "planning"
     const inviteMasterGroups = {};
@@ -572,13 +583,16 @@ async function loadStats() {
     // Count confirmed people (those whose invite_master has most recent response = "planning")
     let totalConfirmed = 0;
     let totalUnlikely = 0;
-    Object.values(inviteMasterGroups).forEach(group => {
+    Object.keys(inviteMasterGroups).forEach(masterName => {
+      const group = inviteMasterGroups[masterName];
+      const peopleCount = countPeopleInGroup(masterName);
+
       if (group.mostRecentResponse === 'planning') {
-        // Count the number of people in this group (1 or 2)
-        totalConfirmed += group.invitees.length;
+        // Count based on "and" in invite_master name
+        totalConfirmed += peopleCount;
       } else if (group.mostRecentResponse === 'unlikely') {
-        // Count the number of people who said unlikely
-        totalUnlikely += group.invitees.length;
+        // Count based on "and" in invite_master name
+        totalUnlikely += peopleCount;
       }
     });
 
