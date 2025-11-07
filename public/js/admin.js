@@ -537,14 +537,23 @@ async function loadStats() {
     // Calculate summary statistics
     const totalInvitees = data.length;
 
-    // Calculate total views: sum view_count per unique_code (not per person)
-    const uniqueCodeViews = {};
+    // Calculate people with views: count people in groups where view_count > 0
+    let totalPeopleWithViews = 0;
+    const processedUniqueCodes = new Set();
+
     data.forEach(inv => {
-      if (!uniqueCodeViews[inv.unique_code]) {
-        uniqueCodeViews[inv.unique_code] = inv.view_count;
+      // Only process each unique_code once (each unique_code = one invite group)
+      if (!processedUniqueCodes.has(inv.unique_code)) {
+        processedUniqueCodes.add(inv.unique_code);
+
+        // If this group has views, count all people in the group
+        if (inv.view_count > 0) {
+          // Count how many people share this unique_code
+          const peopleInGroup = data.filter(i => i.unique_code === inv.unique_code).length;
+          totalPeopleWithViews += peopleInGroup;
+        }
       }
     });
-    const totalViews = Object.values(uniqueCodeViews).reduce((sum, count) => sum + count, 0);
 
     // Calculate confirmed count: group by invite_master and count people who said "planning"
     const inviteMasterGroups = {};
@@ -594,7 +603,7 @@ async function loadStats() {
 
     // Update summary cards
     document.getElementById('totalInvitees').textContent = totalInvitees;
-    document.getElementById('totalViews').textContent = totalViews;
+    document.getElementById('totalViews').textContent = totalPeopleWithViews;
     document.getElementById('totalClicks').textContent = totalConfirmed;
     document.getElementById('totalUnlikely').textContent = totalUnlikely;
     document.getElementById('viewRate').textContent = `${viewRate}%`;
